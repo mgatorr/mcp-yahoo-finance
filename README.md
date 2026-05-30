@@ -3,16 +3,113 @@
 </p>
 
 > ### About this fork
-> This is a fork of [**maxscheijen/mcp-yahoo-finance**](https://github.com/maxscheijen/mcp-yahoo-finance)
-> (MIT, © Max Scheijen) maintained for [**claude-mcp-stack**](https://github.com/mgatorr/claude-mcp-stack).
-> It adds a robustness fix: `get_current_stock_price` no longer crashes with
-> `Unknown format code 'f' for object of type 'str'` on illiquid symbols (e.g. `OD7C.DE`)
-> whose `.info` exposes no numeric last price. The value is coerced, falls back to the last
-> available close, and otherwise returns a clear `No price data available for <symbol>`.
-> Pinned release: **`v0.1.3-mcpstack.1`**. The upstream MIT license and attribution are
-> preserved; the original README follows below.
+> A fork of [**maxscheijen/mcp-yahoo-finance**](https://github.com/maxscheijen/mcp-yahoo-finance)
+> (MIT, © Max Scheijen) maintained for [**claude-mcp-stack**](https://github.com/mgatorr/claude-mcp-stack),
+> with an illiquid-symbol crash fix. Pinned release: **`v0.1.3-mcpstack.1`**. Upstream MIT
+> license and attribution are preserved; the original upstream README follows further down.
+
+## Why this fork
+
+`get_current_stock_price` formatted the price with a float format code without guaranteeing a
+numeric value. On illiquid symbols (e.g. `OD7C.DE` on XETRA) whose `.info` exposes no last
+price, it raised:
+
+```text
+Unknown format code 'f' for object of type 'str'
+```
+
+This fork makes price handling defensive:
+
+- Coerces the value to `float` before formatting (handles numeric strings, `"N/A"`, `None`, `NaN`).
+- Falls back to the **last available close** via `history(period="5d")` when `.info` has no price.
+- Returns a clear **`No price data available for <symbol>`** instead of crashing or returning empty.
+- The same coercion is applied in `get_stock_price_by_date`.
+- Covered by tests (mocked `Ticker`): normal, illiquid with/without history, `"N/A"`, `NaN`, and
+  unknown symbols — none raise.
+
+| Symbol | Upstream (PyPI) | This fork |
+|--------|-----------------|-----------|
+| `UNH`, `8PSG.DE` | price | price |
+| `OD7C.DE` (illiquid) | **crash** | `No price data available for OD7C.DE` |
+| unknown ticker | error/crash | `No price data available for <symbol>` |
+
+## Install this fork (with the fix)
+
+> ⚠️ `uvx mcp-yahoo-finance` / `pip install mcp-yahoo-finance` (the upstream instructions below)
+> install the **published upstream package, which does _not_ contain this fix**. To get the fix,
+> build from this fork:
+
+```sh
+git clone --branch v0.1.3-mcpstack.1 https://github.com/mgatorr/mcp-yahoo-finance.git
+cd mcp-yahoo-finance
+uv venv
+uv pip install -e .
+# Built entry point:
+#   macOS/Linux : .venv/bin/mcp-yahoo-finance
+#   Windows     : .venv\Scripts\mcp-yahoo-finance.exe
+```
+
+Point your client at that binary (use the **absolute** path):
+
+```jsonc
+// Claude Desktop: claude_desktop_config.json   ·   Claude Code: .mcp.json
+{
+  "mcpServers": {
+    "yahoo-finance": {
+      "command": "/absolute/path/to/mcp-yahoo-finance/.venv/bin/mcp-yahoo-finance"
+    }
+  }
+}
+```
+
+No API key is required. (Or let [claude-mcp-stack](https://github.com/mgatorr/claude-mcp-stack)
+install it for you.)
+
+## Tools
+
+| Tool | Returns |
+|------|---------|
+| `get_current_stock_price` | Current price (fixed: safe on illiquid/unknown symbols) |
+| `get_stock_price_by_date` | Close price on a specific date |
+| `get_stock_price_date_range` | Close prices across a date range |
+| `get_historical_stock_prices` | OHLC history for a period/interval |
+| `get_dividends` | Dividend history |
+| `get_income_statement` | Income statement (yearly/quarterly/trailing) |
+| `get_cashflow` | Cash-flow statement |
+| `get_earning_dates` | Upcoming and past earnings dates |
+| `get_news` | Recent news for a symbol |
+| `get_recommendations` | Analyst recommendations |
+| `get_option_expiration_dates` | Available options expiration dates |
+| `get_option_chain` | Options chain for an expiration date |
+
+## Worldwide coverage (free, no key)
+
+Yahoo Finance symbols use exchange suffixes — handy because Twelve Data's free tier excludes
+Europe:
+
+| Suffix | Exchange | Example |
+|--------|----------|---------|
+| *(none)* | US | `AAPL` |
+| `.DE` | XETRA (Germany) | `8PSG.DE` |
+| `.PA` | Euronext Paris | `MC.PA` |
+| `.MC` | BME Madrid (IBEX) | `SAN.MC` |
+| `.MI` | Borsa Italiana (Milan) | `ENI.MI` |
+| `.AS` | Euronext Amsterdam | `ASML.AS` |
+| `.L` | London Stock Exchange | `HSBA.L` |
+
+> Yahoo data may be delayed or end-of-day depending on the exchange, and has occasional gaps
+> for thinly-traded instruments. Not affiliated with Yahoo.
+
+## Develop & test
+
+```sh
+uv venv && uv pip install -e .
+uv run pytest -q   # mocked-Ticker tests; offline and deterministic
+```
 
 ---
+
+*The original upstream README follows.*
 
 # MCP Yahoo Finance
 
