@@ -1,8 +1,33 @@
 import inspect
+import math
 from datetime import datetime
-from typing import Any, Union, get_origin
+from typing import Any, Optional, Union, get_origin
 
 from mcp.types import Tool
+
+
+def coerce_float(value: Any) -> Optional[float]:
+    """Best-effort conversion of a price-like value to ``float``.
+
+    Yahoo Finance occasionally returns prices as numeric strings, as the
+    placeholder string ``"N/A"``, as ``None``, or as ``NaN`` for illiquid
+    symbols. Formatting any of those with a float format code (``f"{v:.4f}"``)
+    raises ``Unknown format code 'f' for object of type 'str'`` or yields the
+    literal ``"nan"``. Returns ``None`` when the value cannot be represented as
+    a finite number so callers can handle the missing-data case explicitly.
+    """
+    if value is None:
+        return None
+    if isinstance(value, bool):
+        # bools are ints in Python; a price is never a boolean.
+        return None
+    try:
+        result = float(value)
+    except (TypeError, ValueError):
+        return None
+    if math.isnan(result) or math.isinf(result):
+        return None
+    return result
 
 
 def parse_docstring(docstring: str) -> dict[str, str]:

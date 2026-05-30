@@ -9,7 +9,12 @@ from mcp.types import TextContent, Tool
 from requests import Session
 from yfinance import Ticker
 
-from mcp_yahoo_finance.utils import generate_tool, validate_date, validate_symbol
+from mcp_yahoo_finance.utils import (
+    coerce_float,
+    generate_tool,
+    validate_date,
+    validate_symbol,
+)
 
 
 class YahooFinance:
@@ -27,13 +32,36 @@ class YahooFinance:
         """
         try:
             symbol = validate_symbol(symbol=symbol)
-            stock = Ticker(ticker=symbol, session=self.session).info
-            current_price = stock.get("regularMarketPrice") or stock.get("currentPrice")
-            if current_price is None:
-                return f"Couldn't fetch {symbol} current price"
-            return f"{current_price:.4f}"
+            stock = Ticker(ticker=symbol, session=self.session)
+
+            info = stock.info or {}
+            price = coerce_float(info.get("regularMarketPrice"))
+            if price is None:
+                price = coerce_float(info.get("currentPrice"))
+
+            # Illiquid symbols (e.g. OD7C.DE) often expose no last price in
+            # `.info`; fall back to the most recent available close.
+            if price is None:
+                price = self._last_close_price(stock)
+
+            if price is None:
+                return f"No price data available for {symbol}"
+            return f"{price:.4f}"
         except Exception as e:
             return f"Error fetching {symbol}: {str(e)}"
+
+    def _last_close_price(self, stock: Ticker) -> float | None:
+        """Return the most recent non-NaN close, or None if unavailable."""
+        try:
+            history = stock.history(period="5d")
+        except Exception:
+            return None
+        if history is None or history.empty or "Close" not in history:
+            return None
+        closes = history["Close"].dropna()
+        if closes.empty:
+            return None
+        return coerce_float(closes.iloc[-1])
 
     def get_stock_price_by_date(self, symbol: str, date: str) -> str:
         """Get the stock price for a given stock symbol on a specific date.
@@ -49,7 +77,10 @@ class YahooFinance:
             price = stock.history(start=date, period="1d")
             if price.empty:
                 return f"Error: No trading data found for {symbol} on {date}"
-            return f"{price.iloc[0]['Close']:.4f}"
+            close = coerce_float(price.iloc[0]["Close"])
+            if close is None:
+                return f"Error: No trading data found for {symbol} on {date}"
+            return f"{close:.4f}"
         except Exception as e:
             return f"Error: {str(e)}"
 
