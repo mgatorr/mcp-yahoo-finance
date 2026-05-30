@@ -1,3 +1,19 @@
+<p align="center">
+  <img src="assets/hero.png" alt="mcp-yahoo-finance — free worldwide market data for Claude, with an illiquid-symbol crash fix" width="100%">
+</p>
+
+> ### About this fork
+> This is a fork of [**maxscheijen/mcp-yahoo-finance**](https://github.com/maxscheijen/mcp-yahoo-finance)
+> (MIT, © Max Scheijen) maintained for [**claude-mcp-stack**](https://github.com/mgatorr/claude-mcp-stack).
+> It adds a robustness fix: `get_current_stock_price` no longer crashes with
+> `Unknown format code 'f' for object of type 'str'` on illiquid symbols (e.g. `OD7C.DE`)
+> whose `.info` exposes no numeric last price. The value is coerced, falls back to the last
+> available close, and otherwise returns a clear `No price data available for <symbol>`.
+> Pinned release: **`v0.1.3-mcpstack.1`**. The upstream MIT license and attribution are
+> preserved; the original README follows below.
+
+---
+
 # MCP Yahoo Finance
 
 ![PyPI - Version](https://img.shields.io/pypi/v/mcp-yahoo-finance)
