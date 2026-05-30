@@ -33,6 +33,10 @@ This fork makes price handling defensive:
 | `OD7C.DE` (illiquid) | **crash** | `No price data available for OD7C.DE` |
 | unknown ticker | error/crash | `No price data available for <symbol>` |
 
+<p align="center">
+  <img src="assets/demo.gif" alt="Animated demo: OD7C.DE crashes upstream but returns 'No price data available' in this fork; European exchanges covered, no API key" width="100%">
+</p>
+
 ## Install this fork (with the fix)
 
 > ⚠️ `uvx mcp-yahoo-finance` / `pip install mcp-yahoo-finance` (the upstream instructions below)

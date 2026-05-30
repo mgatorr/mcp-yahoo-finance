@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Sora:wght@700;800&display=swap');
+  :root{--bg:#0a0f14;--bg2:#101a13;--ink:#e8eef2;--dim:#8aa0ad;--line:rgba(120,180,150,.12);
+        --green:#2ee27b;--red:#ff6b6b;--blue:#5aa9ff;}
+  *{margin:0;padding:0;box-sizing:border-box;}
+  .stage{width:1000px;height:600px;position:relative;overflow:hidden;color:var(--ink);
+    font-family:'IBM Plex Mono',monospace;display:flex;align-items:center;justify-content:center;
+    background:radial-gradient(900px 600px at 80% -10%,rgba(46,226,123,.12),transparent 60%),
+               linear-gradient(160deg,var(--bg2),var(--bg));}
+  .stage::before{content:"";position:absolute;inset:0;
+    background-image:radial-gradient(rgba(140,180,160,.14) 1px,transparent 1.4px);background-size:26px 26px;opacity:.4;}
+  .term{position:relative;width:880px;border:1px solid var(--line);border-radius:16px;overflow:hidden;
+    background:rgba(8,12,16,.78);box-shadow:0 30px 80px rgba(0,0,0,.45);backdrop-filter:blur(3px);}
+  .bar{display:flex;align-items:center;gap:14px;padding:14px 18px;border-bottom:1px solid var(--line);color:var(--dim);font-size:13px;}
+  .dots{display:flex;gap:8px;}.dots i{width:11px;height:11px;border-radius:50%;display:block;}
+  .dots i:nth-child(1){background:#ff5f56;}.dots i:nth-child(2){background:#ffbd2e;}.dots i:nth-child(3){background:#27c93f;}
+  .bar .right{margin-left:auto;color:var(--green);}
+  .body{padding:24px 26px 28px;font-size:16.5px;line-height:1.9;min-height:430px;}
+  .row{opacity:0;transform:translateY(4px);transition:opacity .25s,transform .25s;}
+  .row.on{opacity:1;transform:none;}
+  .who{color:var(--blue);font-weight:600;} .ag{color:var(--green);font-weight:600;}
+  .dim{color:var(--dim);} .bad{color:var(--red);} .good{color:var(--green);font-weight:600;}
+  .tag{display:inline-block;font-size:12px;border:1px solid var(--line);border-radius:6px;padding:2px 8px;color:var(--dim);margin-right:8px;}
+  .up{color:var(--green);} .caret{display:inline-block;width:10px;height:19px;background:var(--green);
+    transform:translateY(3px);box-shadow:0 0 12px rgba(46,226,123,.7);border-radius:2px;margin-left:2px;}
+  .chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px;}
+  .chip{display:inline-flex;align-items:center;gap:7px;padding:5px 12px;border-radius:999px;border:1px solid var(--line);
+    background:rgba(255,255,255,.02);font-size:13.5px;color:var(--dim);}
+  .chip .d{width:7px;height:7px;border-radius:50%;background:#39505c;}
+  .chip.live{color:var(--ink);} .chip.live .d{background:var(--green);box-shadow:0 0 9px var(--green);}
+  .done{margin-top:10px;font-weight:700;color:var(--green);font-family:'Sora',sans-serif;}
+</style>
+</head>
+<body>
+  <div class="stage"><div class="term">
+    <div class="bar"><span class="dots"><i></i><i></i><i></i></span>
+      <span>mcp-yahoo-finance — fork</span><span class="right">● no API key</span></div>
+    <div class="body">
+      <div class="row on" id="r0"><span class="who">you ▸</span> current price of <b>OD7C.DE</b> (illiquid ETC)?<span class="caret" id="car"></span></div>
+      <div class="row" id="r1"><span class="tag">upstream</span><span class="bad">✕ Unknown format code 'f' for object of type 'str'</span></div>
+      <div class="row" id="r2"><span class="tag">this fork</span><span class="good">✓ No price data available for OD7C.DE</span> <span class="dim">(no crash)</span></div>
+      <div class="row" id="r3"><span class="who">you ▸</span> and <b>8PSG.DE</b> on XETRA?</div>
+      <div class="row" id="r4"><span class="ag">yahoo ▸</span> 8PSG.DE <span class="up">377.18 EUR ▲</span> <span class="dim">· free, delayed EOD</span></div>
+      <div class="row" id="r5"><span class="ag">covers ▸</span>
+        <div class="chips" id="chips">
+          <span class="chip" data-c><span class="d"></span>.DE</span>
+          <span class="chip" data-c><span class="d"></span>.PA</span>
+          <span class="chip" data-c><span class="d"></span>.MC</span>
+          <span class="chip" data-c><span class="d"></span>.MI</span>
+          <span class="chip" data-c><span class="d"></span>.AS</span>
+          <span class="chip" data-c><span class="d"></span>.L</span>
+        </div>
+      </div>
+      <div class="row" id="r6"><span class="done">✓ Worldwide market data in Claude — no key, no crashes.</span></div>
+    </div>
+  </div></div>
+<script>
+  function step(n){
+    for(let i=0;i<=6;i++){document.getElementById('r'+i).classList.toggle('on', i<=n);}
+    document.getElementById('car').style.display = n===0 ? 'inline-block' : 'none';
+    document.querySelectorAll('#chips .chip').forEach(c=>c.classList.toggle('live', n>=5));
+  }
+  window.step = step; step(0);
+</script>
+</body>
+</html>
